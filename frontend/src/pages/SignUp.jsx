@@ -100,7 +100,7 @@ function SignUp() {
       }, { withCredentials: true })
       setUserData(result.data)
       setLoading(false)
-      navigate("/customize")
+      navigate("/home")
     } catch (error) {
       console.log(error)
       setUserData(null)
@@ -252,18 +252,18 @@ function SignUp() {
           <span className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
         </button>
         
-        <div className="text-center pt-2">
-          <p className='text-gray-400 text-sm'>
-            Already have an account?{' '}
-            <button 
-              type="button" 
-              className='text-blue-400 hover:text-blue-300 font-medium transition-colors'
-              onClick={() => navigate("/signin")}
-            >
-              Sign In Now
-            </button>
-          </p>
-        </div>
+       <div className="text-center pt-2">
+        <p className='text-gray-400 text-sm'>
+          Already have an account?{' '}
+          <button 
+            type="button" 
+            className='text-blue-400 hover:text-blue-300 font-medium transition-colors'
+            onClick={() => navigate("/signin")}
+          >
+            Sign In Now
+          </button>
+        </p>
+      </div>
       </form>
     </div>
   )
