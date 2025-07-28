@@ -8,7 +8,7 @@ import { gsap } from 'gsap';
 
 function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
-  const { serverUrl, userData, setUserData } = useContext(userDataContext)
+  const { serverUrl, setUserData } = useContext(userDataContext)
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
@@ -59,7 +59,7 @@ function SignIn() {
       particlesRef.current = particles
 
       // Animate particles
-      particles.forEach((particle, i) => {
+      particles.forEach((particle) => {
         const duration = Math.random() * 10 + 10
         const delay = Math.random() * 5
         const x = (Math.random() - 0.5) * 100
