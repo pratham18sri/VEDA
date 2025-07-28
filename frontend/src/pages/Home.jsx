@@ -5,7 +5,7 @@ import axios from 'axios'
 import { CgMenuRight, CgLogOut } from "react-icons/cg";
 import { RxCross1 } from "react-icons/rx";
 import { gsap } from 'gsap';
-import Orb from '../components/Orb';
+import Orb from '../components/orb';
 
 function Home() {
   const { userData, serverUrl, setUserData, getGeminiResponse } = useContext(userDataContext)
