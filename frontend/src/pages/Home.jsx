@@ -21,8 +21,16 @@ function Home() {
   const containerRef = useRef(null)
   const logoRef = useRef(null)
   const orbRef = useRef(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!userData) {
+      navigate("/signin")
+      return
+    }
+
+    setLoading(false)
+    
     // GSAP animations
     gsap.from(logoRef.current, {
       duration: 1,
@@ -61,10 +69,15 @@ function Home() {
       })
     }
 
+    // Initial greeting
+    const greeting = new SpeechSynthesisUtterance(`Hello ${userData?.name || 'there'}, what can I help you with?`)
+    greeting.lang = 'hi-IN'
+    window.speechSynthesis.speak(greeting)
+
     return () => {
       particles.forEach(p => p.remove())
     }
-  }, [])
+  }, [userData, navigate])
 
   const handleLogOut = async () => {
     try {
@@ -130,6 +143,8 @@ function Home() {
   }
 
   useEffect(() => {
+    if (!userData) return
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
 
@@ -193,7 +208,7 @@ function Home() {
 
     recognition.onresult = async (e) => {
       const transcript = e.results[e.results.length - 1][0].transcript.trim()
-      if (transcript.toLowerCase().includes(userData.assistantName.toLowerCase())) {
+      if (userData?.assistantName && transcript.toLowerCase().includes(userData.assistantName.toLowerCase())) {
         setAiText("")
         setUserText(transcript)
         recognition.stop()
@@ -206,10 +221,6 @@ function Home() {
       }
     }
 
-    const greeting = new SpeechSynthesisUtterance(`Hello ${userData.name}, what can I help you with?`)
-    greeting.lang = 'hi-IN'
-    window.speechSynthesis.speak(greeting)
-
     return () => {
       isMounted = false
       clearTimeout(startTimeout)
@@ -217,7 +228,15 @@ function Home() {
       setListening(false)
       isRecognizingRef.current = false
     }
-  }, [])
+  }, [userData, getGeminiResponse])
+
+  if (loading || !userData) {
+    return (
+      <div className="w-full min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div 
@@ -266,14 +285,18 @@ function Home() {
         <h1 className='text-lg font-semibold text-gray-300'>History</h1>
         
         <div className='flex-1 overflow-y-auto'>
-          {userData.history?.map((his, index) => (
-            <div 
-              key={index} 
-              className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
-            >
-              {his}
-            </div>
-          ))}
+          {userData?.history?.length > 0 ? (
+            userData.history.map((his, index) => (
+              <div 
+                key={index} 
+                className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
+              >
+                {his}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 py-2">No history yet</p>
+          )}
         </div>
       </div>
 
@@ -293,14 +316,18 @@ function Home() {
           <h1 className='text-lg font-semibold text-gray-300 mb-4'>History</h1>
           
           <div className='flex-1 overflow-y-auto'>
-            {userData.history?.map((his, index) => (
-              <div 
-                key={index} 
-                className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
-              >
-                {his}
-              </div>
-            ))}
+            {userData?.history?.length > 0 ? (
+              userData.history.map((his, index) => (
+                <div 
+                  key={index} 
+                  className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
+                >
+                  {his}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 py-2">No history yet</p>
+            )}
           </div>
         </div>
       </div>
@@ -324,7 +351,7 @@ function Home() {
         {/* Assistant Info */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-            I'm VEDA
+            I'm {userData?.assistantName || 'VEDA'}
           </h1>
           <p className="text-gray-400">Your Virtual Evolutionary Digital Assistant</p>
         </div>
@@ -339,7 +366,7 @@ function Home() {
           
           {aiText && (
             <div className="p-4 bg-gray-700 rounded-lg">
-              <p className="text-purple-300">{userData?.assistantName}: {aiText}</p>
+              <p className="text-purple-300">{userData?.assistantName || 'VEDA'}: {aiText}</p>
             </div>
           )}
 
