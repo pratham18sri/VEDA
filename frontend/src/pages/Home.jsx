@@ -263,23 +263,33 @@ function Home() {
       ref={containerRef}
       className='w-full min-h-screen bg-gray-900 text-white overflow-hidden relative'
     >
-      {/* VEDA Logo */}
-      <div ref={logoRef} className="absolute top-6 left-6 z-20">
-        <div className="flex items-center">
+      {/* Header Bar */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-gray-800/80 backdrop-blur-lg z-20 flex justify-between items-center px-6 border-b border-gray-700">
+        {/* VEDA Logo */}
+        <div ref={logoRef} className="flex items-center">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-2xl sm:text-3xl px-4 py-2 rounded-lg shadow-lg">
             VEDA
           </div>
-          <div className="ml-2 text-xs sm:text-sm text-gray-300 font-light italic">
+          <div className="ml-2 text-xs sm:text-sm text-gray-300 font-light italic hidden sm:block">
             Virtual Evolutionary<br />Digital Assistant
           </div>
         </div>
-      </div>
 
-      {/* Mobile Hamburger Menu */}
-      <CgMenuRight 
-        className='lg:hidden text-white absolute top-6 right-6 w-6 h-6 z-20 cursor-pointer' 
-        onClick={() => setHam(true)}
-      />
+        {/* Desktop Logout Button - Top Right */}
+        <button 
+          className='hidden lg:flex items-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-2 transition-colors'
+          onClick={handleLogOut}
+        >
+          <CgLogOut className="w-5 h-5" />
+          <span className="hidden sm:inline">Log Out</span>
+        </button>
+
+        {/* Mobile Hamburger Menu */}
+        <CgMenuRight 
+          className='lg:hidden text-white w-6 h-6 cursor-pointer' 
+          onClick={() => setHam(true)}
+        />
+      </div>
 
       {/* Mobile Sidebar */}
       <div className={`
@@ -287,13 +297,16 @@ function Home() {
         p-6 flex flex-col gap-6 z-30 transition-transform duration-300 ease-in-out
         ${ham ? "translate-x-0" : "translate-x-full"}
       `}>
-        <RxCross1 
-          className='text-white absolute top-6 right-6 w-6 h-6 cursor-pointer' 
-          onClick={() => setHam(false)}
-        />
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Menu</h2>
+          <RxCross1 
+            className='text-white w-6 h-6 cursor-pointer' 
+            onClick={() => setHam(false)}
+          />
+        </div>
         
         <button 
-          className='flex items-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 transition-colors'
+          className='flex items-center justify-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 transition-colors w-full'
           onClick={handleLogOut}
         >
           <CgLogOut className="w-5 h-5" />
@@ -305,47 +318,54 @@ function Home() {
         <h1 className='text-lg font-semibold text-gray-300'>History</h1>
         
         <div className='flex-1 overflow-y-auto'>
-          {userData.history?.map((his, index) => (
-            <div 
-              key={index} 
-              className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
-            >
-              {his}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-gray-800/80 backdrop-blur-lg p-6 border-r border-gray-700">
-        <div className="flex flex-col h-full">
-          <button 
-            className='flex items-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 mb-6 transition-colors'
-            onClick={handleLogOut}
-          >
-            <CgLogOut className="w-5 h-5" />
-            Log Out
-          </button>
-
-          <div className='w-full h-px bg-gray-600 mb-6'></div>
-          
-          <h1 className='text-lg font-semibold text-gray-300 mb-4'>History</h1>
-          
-          <div className='flex-1 overflow-y-auto'>
-            {userData.history?.map((his, index) => (
+          {userData.history?.length > 0 ? (
+            userData.history.map((his, index) => (
               <div 
                 key={index} 
                 className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
               >
                 {his}
               </div>
-            ))}
+            ))
+          ) : (
+            <p className="text-gray-500 py-2">No history yet</p>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-gray-800/80 backdrop-blur-lg p-6 border-r border-gray-700">
+        <div className="flex flex-col h-full">
+          <h1 className='text-lg font-semibold text-gray-300 mb-4'>History</h1>
+          
+          <div className='flex-1 overflow-y-auto mb-6'>
+            {userData.history?.length > 0 ? (
+              userData.history.map((his, index) => (
+                <div 
+                  key={index} 
+                  className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
+                >
+                  {his}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 py-2">No history yet</p>
+            )}
           </div>
+
+          {/* Desktop Sidebar Logout Button - Bottom */}
+          <button 
+            className='flex items-center justify-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 transition-colors mt-auto'
+            onClick={handleLogOut}
+          >
+            <CgLogOut className="w-5 h-5" />
+            Log Out
+          </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="main-content lg:ml-64 p-6 flex flex-col items-center justify-between min-h-screen">
+      <div className="main-content lg:ml-64 pt-20 p-6 flex flex-col items-center justify-between min-h-screen">
         {/* Orb Container */}
         <div 
           ref={orbRef}
