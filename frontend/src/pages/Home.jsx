@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { userDataContext } from '../context/UserContext'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { CgMenuRight, CgLogOut } from "react-icons/cg"
-import { RxCross1 } from "react-icons/rx"
-import { gsap } from 'gsap'
-import Orb from '../components/orb'
+import { CgMenuRight, CgLogOut } from "react-icons/cg";
+import { RxCross1 } from "react-icons/rx";
+import { gsap } from 'gsap';
+import Orb from '../components/orb';
 
 function Home() {
   const { userData, serverUrl, setUserData, getGeminiResponse } = useContext(userDataContext)
@@ -46,7 +46,7 @@ function Home() {
     const particles = []
     for (let i = 0; i < 20; i++) {
       const particle = document.createElement('div')
-      particle.className = 'absolute rounded-full bg-purple-500/30'
+      particle.className = 'absolute rounded-full bg-blue-500/20'
       particle.style.width = `${Math.random() * 10 + 5}px`
       particle.style.height = particle.style.width
       particle.style.left = `${Math.random() * 100}%`
@@ -156,7 +156,7 @@ function Home() {
     } catch (error) {
       console.error("Error getting response:", error)
       setMessages(prev => [...prev, { 
-        text: "SYSTEM_ERROR: REQUEST_FAILED", 
+        text: "Sorry, I encountered an error. Please try again.", 
         sender: 'ai' 
       }])
     }
@@ -242,12 +242,12 @@ function Home() {
       }
     }
 
-    const greeting = new SpeechSynthesisUtterance(`ACCESS_GRANTED. USER: ${userData.name}. SYSTEM_READY.`)
+    const greeting = new SpeechSynthesisUtterance(`Hello ${userData.name}, what can I help you with?`)
     greeting.lang = 'hi-IN'
     window.speechSynthesis.speak(greeting)
 
     // Add initial greeting message
-    setMessages([{ text: `SYSTEM: [VEDA_AI] ONLINE. USER_ID: ${userData.name}. QUERY?`, sender: 'ai' }])
+    setMessages([{ text: `Hello ${userData.name}, I'm ${userData.assistantName || 'VEDA'}. How can I help you?`, sender: 'ai' }])
 
     return () => {
       isMounted = false
@@ -261,114 +261,105 @@ function Home() {
   return (
     <div 
       ref={containerRef}
-      className='w-full min-h-screen bg-black text-purple-300 overflow-hidden relative'
+      className='w-full min-h-screen bg-gray-900 text-white overflow-hidden relative'
     >
-      {/* Matrix Grid Overlay */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
-        backgroundImage: `
-          linear-gradient(rgba(107, 33, 255, 0.2) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(107, 33, 255, 0.2) 1px, transparent 1px)
-        `,
-        backgroundSize: '40px 40px'
-      }}></div>
-
       {/* Header Bar */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-black/90 backdrop-blur-lg z-20 flex justify-between items-center px-6 border-b border-purple-500/50">
-        {/* Cyberpunk VEDA Logo */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-gray-800/80 backdrop-blur-lg z-20 flex justify-between items-center px-6 border-b border-gray-700">
+        {/* VEDA Logo */}
         <div ref={logoRef} className="flex items-center">
-          <div className="bg-black text-purple-400 font-bold text-2xl sm:text-3xl px-4 py-2 rounded border-2 border-purple-500 shadow-lg shadow-purple-500/20 font-mono">
-            VEDA<span className="text-purple-300">_AI</span>
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-2xl sm:text-3xl px-4 py-2 rounded-lg shadow-lg">
+            VEDA
           </div>
-          <div className="ml-2 text-xs sm:text-sm text-purple-300 font-mono italic hidden sm:block">
-            VIRTUAL_DIGITAL_ASSISTANT
+          <div className="ml-2 text-xs sm:text-sm text-gray-300 font-light italic hidden sm:block">
+            Virtual Evolutionary<br />Digital Assistant
           </div>
         </div>
 
         {/* Desktop Logout Button - Top Right */}
         <button 
-          className='hidden lg:flex items-center gap-2 text-purple-300 bg-black hover:bg-purple-900/50 rounded-lg px-4 py-2 transition-colors border border-purple-500/50 font-mono'
+          className='hidden lg:flex items-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-2 transition-colors'
           onClick={handleLogOut}
         >
           <CgLogOut className="w-5 h-5" />
-          <span className="hidden sm:inline">LOG_OUT</span>
+          <span className="hidden sm:inline">Log Out</span>
         </button>
 
         {/* Mobile Hamburger Menu */}
         <CgMenuRight 
-          className='lg:hidden text-purple-300 w-6 h-6 cursor-pointer hover:text-purple-200 transition-colors' 
+          className='lg:hidden text-white w-6 h-6 cursor-pointer' 
           onClick={() => setHam(true)}
         />
       </div>
 
       {/* Mobile Sidebar */}
       <div className={`
-        fixed lg:hidden top-0 right-0 w-3/4 h-full bg-black/95 backdrop-blur-lg 
+        fixed lg:hidden top-0 right-0 w-3/4 h-full bg-gray-800/90 backdrop-blur-lg 
         p-6 flex flex-col gap-6 z-30 transition-transform duration-300 ease-in-out
-        ${ham ? "translate-x-0" : "translate-x-full"} border-l border-purple-500/30
+        ${ham ? "translate-x-0" : "translate-x-full"}
       `}>
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-purple-300 font-mono">MENU</h2>
+          <h2 className="text-xl font-semibold">Menu</h2>
           <RxCross1 
-            className='text-purple-300 w-6 h-6 cursor-pointer hover:text-purple-200 transition-colors' 
+            className='text-white w-6 h-6 cursor-pointer' 
             onClick={() => setHam(false)}
           />
         </div>
         
         <button 
-          className='flex items-center justify-center gap-2 text-purple-300 bg-black hover:bg-purple-900/50 rounded-lg px-4 py-3 transition-colors w-full border border-purple-500/50 font-mono'
+          className='flex items-center justify-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 transition-colors w-full'
           onClick={handleLogOut}
         >
           <CgLogOut className="w-5 h-5" />
-          LOG_OUT
+          Log Out
         </button>
 
-        <div className='w-full h-px bg-purple-500/30'></div>
+        <div className='w-full h-px bg-gray-600'></div>
         
-        <h1 className='text-lg font-semibold text-purple-300 font-mono'>HISTORY</h1>
+        <h1 className='text-lg font-semibold text-gray-300'>History</h1>
         
         <div className='flex-1 overflow-y-auto'>
           {userData.history?.length > 0 ? (
             userData.history.map((his, index) => (
               <div 
                 key={index} 
-                className='text-purple-400 py-2 border-b border-purple-500/30 hover:text-white transition-colors cursor-pointer font-mono text-sm'
+                className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
               >
                 {his}
               </div>
             ))
           ) : (
-            <p className="text-purple-500/70 py-2 font-mono">NO_HISTORY_FOUND</p>
+            <p className="text-gray-500 py-2">No history yet</p>
           )}
         </div>
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-black/90 backdrop-blur-lg p-6 border-r border-purple-500/30">
+      <div className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-gray-800/80 backdrop-blur-lg p-6 border-r border-gray-700">
         <div className="flex flex-col h-full">
-          <h1 className='text-lg font-semibold text-purple-300 mb-4 font-mono'>HISTORY</h1>
+          <h1 className='text-lg font-semibold text-gray-300 mb-4'>History</h1>
           
           <div className='flex-1 overflow-y-auto mb-6'>
             {userData.history?.length > 0 ? (
               userData.history.map((his, index) => (
                 <div 
                   key={index} 
-                  className='text-purple-400 py-2 border-b border-purple-500/30 hover:text-white transition-colors cursor-pointer font-mono text-sm'
+                  className='text-gray-400 py-2 border-b border-gray-700 hover:text-white transition-colors cursor-pointer'
                 >
                   {his}
                 </div>
               ))
             ) : (
-              <p className="text-purple-500/70 py-2 font-mono">NO_HISTORY_FOUND</p>
+              <p className="text-gray-500 py-2">No history yet</p>
             )}
           </div>
 
           {/* Desktop Sidebar Logout Button - Bottom */}
           <button 
-            className='flex items-center justify-center gap-2 text-purple-300 bg-black hover:bg-purple-900/50 rounded-lg px-4 py-3 transition-colors mt-auto border border-purple-500/50 font-mono'
+            className='flex items-center justify-center gap-2 text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 transition-colors mt-auto'
             onClick={handleLogOut}
           >
             <CgLogOut className="w-5 h-5" />
-            LOG_OUT
+            Log Out
           </button>
         </div>
       </div>
@@ -378,29 +369,29 @@ function Home() {
         {/* Orb Container */}
         <div 
           ref={orbRef}
-          className="w-full max-w-2xl h-96 relative mb-8 rounded-2xl overflow-hidden border border-purple-500/50 shadow-xl"
+          className="w-full max-w-2xl h-96 relative mb-8 rounded-2xl overflow-hidden border border-gray-700/50 shadow-xl"
         >
           <Orb
             hoverIntensity={0.5}
             rotateOnHover={true}
-            hue={280} // Purple hue
+            hue={0}
             forceHoverState={false}
             className="w-full h-full"
           />
         </div>
 
         {/* Chat Container */}
-        <div className="w-full max-w-2xl bg-black/70 backdrop-blur-sm rounded-xl p-6 border border-purple-500/50 flex flex-col">
+        <div className="w-full max-w-2xl bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 flex flex-col">
           <div className="flex-1 overflow-y-auto max-h-64 mb-4">
             {messages.map((message, index) => (
               <div 
                 key={index} 
-                className={`mb-3 p-3 rounded-lg border ${message.sender === 'user' 
-                  ? 'bg-purple-900/20 ml-auto border-purple-500/30' 
-                  : 'bg-black/50 mr-auto border-purple-500/30'}`}
+                className={`mb-3 p-3 rounded-lg ${message.sender === 'user' 
+                  ? 'bg-blue-900/30 ml-auto' 
+                  : 'bg-purple-900/30 mr-auto'}`}
               >
-                <p className={`font-mono ${message.sender === 'user' ? 'text-purple-300' : 'text-purple-200'}`}>
-                  <strong>{message.sender === 'user' ? 'USER:' : 'VEDA_AI:'} </strong>
+                <p className={message.sender === 'user' ? 'text-blue-300' : 'text-purple-300'}>
+                  <strong>{message.sender === 'user' ? 'You' : userData?.assistantName || 'VEDA'}: </strong>
                   {message.text}
                 </p>
               </div>
@@ -414,22 +405,22 @@ function Home() {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="ENTER_COMMAND..."
-              className="flex-1 bg-black/70 text-purple-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-purple-500/30 font-mono"
+              placeholder="Type your message here..."
+              className="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
             <button 
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors border border-purple-500/50 font-mono"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              SEND
+              Send
             </button>
           </form>
 
           {/* Listening Indicator */}
           <div className="mt-4 flex justify-center items-center">
-            <div className={`w-4 h-4 rounded-full ${listening ? 'bg-green-500 animate-pulse' : 'bg-red-500'} border border-white/50`}></div>
-            <p className="ml-2 text-purple-300 font-mono">
-              {listening ? 'SYSTEM_ACTIVE: LISTENING...' : 'SYSTEM_STANDBY'}
+            <div className={`w-4 h-4 rounded-full ${listening ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <p className="ml-2 text-gray-400">
+              {listening ? 'Listening...' : 'Not listening'}
             </p>
           </div>
         </div>
