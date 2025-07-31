@@ -329,7 +329,7 @@ function SignUp() {
               onChange={(e) => setPassword(e.target.value)} 
               value={password}
             />
-            <label className="cyber-label">PASSSWORD</label>
+            <label className="cyber-label">PASSWORD</label>
             <button 
               type="button" 
               className='absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-300 transition-colors'
