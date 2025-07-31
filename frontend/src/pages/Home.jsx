@@ -1,10 +1,11 @@
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { userDataContext } from '../context/UserContext'
 import { useNavigate } from 'react-router-dom'
 import { CgMenuRight, CgLogOut } from "react-icons/cg"
 import { RxCross1 } from "react-icons/rx"
 import { gsap } from 'gsap'
 import Orb from '../components/orb'
+import axios from 'axios'
 
 function Home() {
   const { userData, serverUrl, setUserData, getGeminiResponse } = useContext(userDataContext)
@@ -21,56 +22,105 @@ function Home() {
   const logoRef = useRef(null)
   const orbRef = useRef(null)
   const messagesEndRef = useRef(null)
+  const mainContentRef = useRef(null)
 
   // Add loading state
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Check if userData exists, otherwise redirect
-    if (!userData) {
+  // Memoize handleLogOut to prevent recreation on every render
+  const handleLogOut = useCallback(async () => {
+    try {
+      await axios.get(`${serverUrl}/api/auth/logout`, { withCredentials: true })
+      setUserData(null)
       navigate('/signin')
+    } catch (error) {
+      console.error("Logout error:", error)
+      setUserData(null)
+      navigate('/signin')
+    }
+  }, [serverUrl, setUserData, navigate])
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (!userData) return
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition not supported in this browser")
       return
     }
-    
-    // GSAP animations
-    gsap.from(logoRef.current, {
-      duration: 1,
-      opacity: 0,
-      y: -50,
-      ease: "elastic.out(1, 0.5)"
-    })
 
-    gsap.from(".main-content", {
-      duration: 1,
-      opacity: 0,
-      y: 50,
-      delay: 0.5,
-      ease: "power3.out"
-    })
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.lang = 'en-US'
+    recognition.interimResults = false
 
-    // Particle effect for orb container
-    const particles = []
-    for (let i = 0; i < 20; i++) {
-      const particle = document.createElement('div')
-      particle.className = 'absolute rounded-full bg-purple-500/30'
-      particle.style.width = `${Math.random() * 10 + 5}px`
-      particle.style.height = particle.style.width
-      particle.style.left = `${Math.random() * 100}%`
-      particle.style.top = `${Math.random() * 100}%`
-      orbRef.current?.appendChild(particle)
-      particles.push(particle)
+    recognitionRef.current = recognition
 
-      gsap.to(particle, {
-        x: `${(Math.random() - 0.5) * 100}`,
-        y: `${(Math.random() - 0.5) * 100}`,
-        duration: Math.random() * 10 + 10,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      })
+    // ... rest of your speech recognition setup
+    // (keep your existing recognition handlers)
+
+    return () => {
+      recognition.stop()
     }
+  }, [userData])
 
-    // Add initial greeting message
+  // GSAP animations - now properly guarded with ref checks
+  useEffect(() => {
+    if (!logoRef.current || !mainContentRef.current) return
+
+    const ctx = gsap.context(() => {
+      // Logo animation
+      gsap.from(logoRef.current, {
+        duration: 1,
+        opacity: 0,
+        y: -50,
+        ease: "elastic.out(1, 0.5)"
+      })
+
+      // Main content animation
+      gsap.from(mainContentRef.current, {
+        duration: 1,
+        opacity: 0,
+        y: 50,
+        delay: 0.5,
+        ease: "power3.out"
+      })
+
+      // Particle effect for orb container
+      if (orbRef.current) {
+        const particles = []
+        for (let i = 0; i < 20; i++) {
+          const particle = document.createElement('div')
+          particle.className = 'absolute rounded-full bg-purple-500/30'
+          particle.style.width = `${Math.random() * 10 + 5}px`
+          particle.style.height = particle.style.width
+          particle.style.left = `${Math.random() * 100}%`
+          particle.style.top = `${Math.random() * 100}%`
+          orbRef.current.appendChild(particle)
+          particles.push(particle)
+
+          gsap.to(particle, {
+            x: `${(Math.random() - 0.5) * 100}`,
+            y: `${(Math.random() - 0.5) * 100}`,
+            duration: Math.random() * 10 + 10,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut"
+          })
+        }
+
+        return () => {
+          particles.forEach(p => p.remove())
+        }
+      }
+    }, containerRef) // scope the context to the container
+
+    return () => ctx.revert() // cleanup
+  }, [])
+
+  // Initialize messages
+  useEffect(() => {
     if (userData) {
       setMessages([{ 
         text: `SYSTEM: [VEDA_AI] ONLINE. USER_ID: ${userData.name || 'Guest'}. QUERY?`, 
@@ -78,14 +128,12 @@ function Home() {
       }])
       setLoading(false)
     }
+  }, [userData])
 
-    return () => {
-      particles.forEach(p => p.remove())
-    }
-  }, [userData, navigate])
-
-  // Rest of your existing functions (handleLogOut, startRecognition, speak, handleCommand, handleTextSubmit)
-  // ...
+  // Auto-scroll messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   if (loading || !userData) {
     return (
@@ -137,7 +185,7 @@ function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="main-content lg:ml-64 pt-20 p-6 flex flex-col items-center justify-between min-h-screen">
+      <div ref={mainContentRef} className="main-content lg:ml-64 pt-20 p-6 flex flex-col items-center justify-between min-h-screen">
         {/* Orb Container */}
         <div 
           ref={orbRef}
