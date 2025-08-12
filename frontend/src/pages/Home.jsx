@@ -8,7 +8,7 @@ import Orb from '../components/orb';
 import axios from 'axios';
 
 function Home() {
-  // State and ref declarations
+  
   const { userData, serverUrl, setUserData, getGeminiResponse } = useContext(userDataContext);
   const navigate = useNavigate();
   const [listening, setListening] = useState(false);
