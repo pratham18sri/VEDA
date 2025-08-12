@@ -11,7 +11,7 @@ import cookieParser from "cookie-parser";
 const app = express();
 
 const allowedOrigins = [
-  "https://veda-1-pi2t.onrender.com",
+  "https://veda-2-0.onrender.com",
   "http://localhost:5173"
 ];
 
