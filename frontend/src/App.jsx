@@ -6,14 +6,30 @@ import { userDataContext } from './context/UserContext';
 import Home from './pages/Home';
 
 function App() {
-  const { userData } = useContext(userDataContext);
+  const { userData, loading } = useContext(userDataContext);
   
+  if (loading) {
+    return <div className="loading-screen">Loading...</div>;
+  }
+
   return (
     <Routes>
-      <Route path='/' element={!userData ? <SignUp /> : <Navigate to="/home" />} />
-      <Route path='/signup' element={!userData ? <SignUp /> : <Navigate to="/home" />} />
-      <Route path='/signin' element={!userData ? <SignIn /> : <Navigate to="/home" />} />
-      <Route path='/home' element={userData ? <Home /> : <Navigate to="/signin" />} />
+      <Route 
+        path='/' 
+        element={!userData ? <SignUp /> : <Navigate to="/home" replace />} 
+      />
+      <Route 
+        path='/signup' 
+        element={!userData ? <SignUp /> : <Navigate to="/home" replace />} 
+      />
+      <Route 
+        path='/signin' 
+        element={!userData ? <SignIn /> : <Navigate to="/home" replace />} 
+      />
+      <Route 
+        path='/home' 
+        element={userData ? <Home /> : <Navigate to="/signin" replace />} 
+      />
     </Routes>
   );
 }
