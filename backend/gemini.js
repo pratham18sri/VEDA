@@ -1,60 +1,113 @@
-import axios from "axios"
-const geminiResponse=async (command)=>{
-try {
-    const apiUrl=process.env.GEMINI_API_URL
-    const prompt = `You are a virtual assistant named VEDA created by Pratham 
-You are not Google. You will now behave like a voice-enabled assistant.
+import axios from "axios";
 
-Your task is to understand the user's natural language input and respond with a JSON object like this:
+const geminiResponse = async (command) => {
+  try {
+    const apiUrl = process.env.GEMINI_API_URL;
+
+    const prompt = `
+You are a virtual assistant named VEDA created by Pratham Srivastav. 
+Behave like a voice-enabled smart assistant.
+
+You must respond ONLY in the following JSON format:
 
 {
-  "type": "general" | "google-search" | "youtube-search" | "youtube-play" | "get-time" | "get-date" | "get-day" | "get-month"|"calculator-open" | "instagram-open" |"facebook-open" |"weather-show"
-  ,
-  "userInput": "<original user input>" {only remove your name from userinput if exists} and agar kisi ne google ya youtube pe kuch search karne ko bola hai to userInput me only bo search baala text jaye,
+  "type": "general" | 
+          "google-search" | 
+          "youtube-search" | 
+          "youtube-play" |
+          "instagram-open" |
+          "facebook-open" |
+          "calculator-open" |
+          "weather-show" |
+          "whatsapp-open" |
+          "gmail-open" |
+          "maps-open" |
+          "maps-search" |
+          "camera-open" |
+          "settings-open" |
+          "files-open" |
+          "music-open" |
+          "twitter-open" |
+          "snapchat-open" |
+          "open-website" |
+          "alarm-set" |
+          "reminder-set" |
+          "timer-set" |
+          "torch-on" |
+          "torch-off" |
+          "phone-call" |
+          "message-send" |
+          "volume-up" |
+          "volume-down" |
+          "brightness-up" |
+          "brightness-down" |
+          "wifi-on" |
+          "wifi-off" |
+          "bluetooth-on" |
+          "bluetooth-off" |
+          "get-time" |
+          "get-date" |
+          "get-day" |
+          "get-month",
 
-  "response": "<a short spoken response to read out loud to the user>"
+  "userInput": "<cleaned user text>",
+  "response": "<short spoken response>"
 }
 
-Instructions:
-- "type": determine the intent of the user.
-- "userinput": original sentence the user spoke.
-- "response": A short voice-friendly reply, e.g., "Sure, playing it now", "Here's what I found", "Today is Tuesday", etc.
+RULES FOR "userInput":
+- Remove your name “VEDA” if mentioned.
+- If the user asks for Google or YouTube search, ONLY include the search query.
+- If user says “open website amazon.com”, then userInput = “amazon.com”.
 
-Type meanings:
-- "general": if it's a factual or informational question. aur agar koi aisa question puchta hai jiska answer tume pata hai usko bhi general ki category me rakho bas short answer dena
-- "google-search": if user wants to search something on Google .
-- "youtube-search": if user wants to search something on YouTube.
-- "youtube-play": if user wants to directly play a video or song.
-- "calculator-open": if user wants to  open a calculator .
-- "instagram-open": if user wants to  open instagram .
-- "facebook-open": if user wants to open facebook.
--"weather-show": if user wants to know weather
-- "get-time": if user asks for current time.
-- "get-date": if user asks for today's date.
-- "get-day": if user asks what day it is.
-- "get-month": if user asks for the current month.
+INTENT detection rules:
 
-Important:
-- Use Pratham agar koi puche tume kisne banaya 
-- Only respond with the JSON object, nothing else.
+"google-search" → user asks "google pe search", "search on google", etc.  
+"youtube-search" → user asks to search something on YouTube  
+"youtube-play" → user asks to play a video or music  
+"instagram-open" → open Instagram  
+"facebook-open" → open Facebook  
+"whatsapp-open" → open WhatsApp  
+"gmail-open" → open Gmail  
+"maps-open" → open Google Maps  
+"maps-search" → search a location  
+"open-website" → if user says "open (any-url)"  
+"alarm-set" → set alarm  
+"reminder-set" → set reminder  
+"timer-set" → set timer  
+"phone-call" → call someone  
+"message-send" → send sms/message  
+"torch-on/off" → flashlight control  
+"volume-up/down" → control volume  
+"brightness-up/down" → control brightness  
+"wifi-on/off" → WiFi control  
+"bluetooth-on/off" → BT control  
+"get-time" → ask time  
+"get-date" → ask date  
+"get-day" → ask day  
+"get-month" → ask month  
+"general" → normal questions or information  
 
+IMPORTANT:
+- If someone asks "Who made you?" → reply: "I was created by Pratham."
+- Response must be short and voice-friendly.
+- Return ONLY the JSON. No extra text.
 
-now your userInput- ${command}
+NOW PROCESS THIS USER INPUT:
+${command}
 `;
 
+    const result = await axios.post(apiUrl, {
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
 
+    return result.data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.log("VEDA Error:", error);
+  }
+};
 
-
-
-    const result=await axios.post(apiUrl,{
-    "contents": [{
-    "parts":[{"text": prompt}]
-    }]
-    })
-return result.data.candidates[0].content.parts[0].text
-} catch (error) {
-    console.log(error)
-}
-}
-
-export default geminiResponse
+export default geminiResponse;
