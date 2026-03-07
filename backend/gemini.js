@@ -234,10 +234,13 @@ const RETRY_DELAY_MS = 1000
 async function callGeminiAPI(apiUrl, payload, retries = MAX_RETRIES) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const result = await axios.post(apiUrl, payload, { timeout: 15000 })
+      const result = await axios.post(apiUrl, payload, { timeout: 30000 })
       return result.data
     } catch (err) {
       console.log(`Gemini API attempt ${attempt + 1} failed:`, err.message)
+      if (err.response) {
+        console.log(`Status: ${err.response.status}, Data:`, JSON.stringify(err.response.data).slice(0, 300))
+      }
       if (attempt < retries) {
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (attempt + 1)))
       } else {
@@ -382,6 +385,12 @@ User said: "${cleanCommand}"
     }
   } catch (error) {
     console.log("Gemini API Error:", error.message)
+    if (error.response) {
+      console.log("Response status:", error.response.status)
+      console.log("Response data:", JSON.stringify(error.response.data).slice(0, 500))
+    } else if (error.code) {
+      console.log("Error code:", error.code)
+    }
     return JSON.stringify({
       type: "general",
       userInput: command,
