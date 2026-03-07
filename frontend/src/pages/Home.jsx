@@ -5,19 +5,21 @@ import { CgMenuRight, CgLogOut } from "react-icons/cg";
 import { RxCross1 } from "react-icons/rx";
 import { gsap } from 'gsap';
 import Orb from '../components/orb';
+import VoiceButton from '../components/VoiceButton';
+import useVoiceRecognition from '../hooks/useVoiceRecognition';
 import axios from 'axios';
 
 function Home() {
   
   const { userData, serverUrl, setUserData, getGeminiResponse } = useContext(userDataContext);
   const navigate = useNavigate();
-  const [listening, setListening] = useState(false);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState([]);
   const [chatHistory, setChatHistory] = useState([]);
   const [ham, setHam] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+  const [isTyping, setIsTyping] = useState(false);
+
   const isSpeakingRef = useRef(false);
   const recognitionRef = useRef(null);
   const isRecognizingRef = useRef(false);
@@ -27,6 +29,31 @@ function Home() {
   const messagesEndRef = useRef(null);
   const mainContentRef = useRef(null);
   const synth = window.speechSynthesis;
+
+  // Voice recognition hook for manual mic button
+  const {
+    isRecording: isMicRecording,
+    isProcessing: isMicProcessing,
+    interimTranscript,
+    error: voiceError,
+    supported: voiceSupported,
+    toggleListening: toggleMic,
+    resetTranscript,
+  } = useVoiceRecognition({
+    lang: 'en-US',
+    continuous: false,
+    interimResults: true,
+    onResult: (finalTranscript) => {
+      // Append the voice transcript to the input field
+      setInputText(prev => {
+        const separator = prev.trim() ? ' ' : '';
+        return prev + separator + finalTranscript;
+      });
+    },
+    onError: (errorMsg) => {
+      console.warn('Voice input error:', errorMsg);
+    },
+  });
 
   // Load chat history from userData
   useEffect(() => {
@@ -110,6 +137,7 @@ function Home() {
   const handleCommand = useCallback(async (data) => {
     const { type, userInput, response } = data;
     setMessages(prev => [...prev, { text: response, sender: 'ai' }]);
+    setIsTyping(false);
     speak(response);
 
     const commands = {
@@ -133,27 +161,29 @@ function Home() {
 
     const userMessage = inputText;
     setInputText("");
+    resetTranscript();
     const newMessage = { text: userMessage, sender: 'user' };
     setMessages(prev => [...prev, newMessage]);
+    setIsTyping(true);
     await addToHistory(userMessage);
 
     try {
       recognitionRef.current?.stop();
       isRecognizingRef.current = false;
-      setListening(false);
 
       const data = await getGeminiResponse(userMessage);
       await handleCommand(data);
     } catch (error) {
       console.error("Error getting response:", error);
+      setIsTyping(false);
       setMessages(prev => [...prev, { 
-        text: "SYSTEM_ERROR: REQUEST_FAILED", 
+        text: "SYSTEM_ERROR: REQUEST_FAILED. Please try again.", 
         sender: 'ai' 
       }]);
     }
-  }, [inputText, getGeminiResponse, addToHistory, handleCommand]);
+  }, [inputText, getGeminiResponse, addToHistory, handleCommand, resetTranscript]);
 
-  // Initialize speech recognition
+  // Initialize speech recognition (always-on listening for assistant name)
   useEffect(() => {
     if (!userData) return;
 
@@ -171,12 +201,10 @@ function Home() {
 
     recognition.onstart = () => {
       isRecognizingRef.current = true;
-      setListening(true);
     };
 
     recognition.onend = () => {
       isRecognizingRef.current = false;
-      setListening(false);
       if (!isSpeakingRef.current) {
         setTimeout(() => {
           try {
@@ -191,7 +219,6 @@ function Home() {
     recognition.onerror = (event) => {
       console.warn("Recognition error:", event.error);
       isRecognizingRef.current = false;
-      setListening(false);
       if (event.error !== "aborted" && !isSpeakingRef.current) {
         setTimeout(() => {
           try {
@@ -207,9 +234,9 @@ function Home() {
       const transcript = e.results[e.results.length - 1][0].transcript.trim();
       if (transcript.toLowerCase().includes(userData.assistantName?.toLowerCase() || 'veda')) {
         setMessages(prev => [...prev, { text: transcript, sender: 'user' }]);
+        setIsTyping(true);
         recognition.stop();
         isRecognizingRef.current = false;
-        setListening(false);
         const data = await getGeminiResponse(transcript);
         await handleCommand(data);
       }
@@ -290,7 +317,7 @@ function Home() {
   // Auto-scroll messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   if (loading || !userData) {
     return (
@@ -304,28 +331,45 @@ function Home() {
 
   // Render functions for sidebars
   const renderMobileSidebar = () => (
-    <div className={`
-      fixed lg:hidden top-0 right-0 w-3/4 h-full bg-black/95 backdrop-blur-lg 
-      p-6 flex flex-col gap-6 z-30 transition-transform duration-300 ease-in-out
-      ${ham ? "translate-x-0" : "translate-x-full"} border-l border-purple-500/30
-    `}>
+    <div 
+      className={`
+        fixed lg:hidden top-0 right-0 w-3/4 h-full bg-black/95 backdrop-blur-lg 
+        p-6 flex flex-col gap-6 z-30 transition-transform duration-300 ease-in-out
+        ${ham ? "translate-x-0" : "translate-x-full"} border-l border-purple-500/30
+      `}
+      role="dialog"
+      aria-label="Chat history sidebar"
+      aria-hidden={!ham}
+    >
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-purple-300 font-mono">CHAT_HISTORY</h2>
         <RxCross1 
           className='text-purple-300 w-6 h-6 cursor-pointer hover:text-purple-200 transition-colors' 
           onClick={() => setHam(false)}
+          aria-label="Close sidebar"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setHam(false)}
         />
       </div>
       
-      <div className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto' role="list" aria-label="Chat history items">
         {chatHistory?.length > 0 ? (
           chatHistory.map((his, index) => (
-            <div key={index} className='flex justify-between items-center py-2 border-b border-purple-500/30'>
+            <div key={index} className='flex justify-between items-center py-2 border-b border-purple-500/30' role="listitem">
               <div 
                 className='text-purple-400 hover:text-white transition-colors cursor-pointer font-mono text-sm flex-1'
                 onClick={() => {
                   setInputText(his);
                   setHam(false);
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setInputText(his);
+                    setHam(false);
+                  }
                 }}
               >
                 {his.length > 30 ? `${his.substring(0, 30)}...` : his}
@@ -336,7 +380,7 @@ function Home() {
                   deleteHistoryItem(index);
                 }}
                 className="text-purple-500 hover:text-red-400 ml-2"
-                aria-label="Delete history item"
+                aria-label={`Delete history item: ${his.substring(0, 20)}`}
               >
                 <RxCross1 className="w-4 h-4" />
               </button>
@@ -350,6 +394,7 @@ function Home() {
       <button 
         className='flex items-center justify-center gap-2 text-purple-300 bg-black hover:bg-purple-900/50 rounded-lg px-4 py-3 transition-colors w-full border border-purple-500/50 font-mono'
         onClick={handleLogOut}
+        aria-label="Log out"
       >
         <CgLogOut className="w-5 h-5" />
         LOG_OUT
@@ -358,17 +403,20 @@ function Home() {
   );
 
   const renderDesktopSidebar = () => (
-    <div className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-black/90 backdrop-blur-lg p-6 border-r border-purple-500/30">
+    <aside className="hidden lg:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-black/90 backdrop-blur-lg p-6 border-r border-purple-500/30" aria-label="Chat history">
       <div className="flex flex-col h-full">
         <h1 className='text-lg font-semibold text-purple-300 mb-4 font-mono'>CHAT_HISTORY</h1>
         
-        <div className='flex-1 overflow-y-auto mb-6'>
+        <div className='flex-1 overflow-y-auto mb-6' role="list" aria-label="Chat history items">
           {chatHistory?.length > 0 ? (
             chatHistory.map((his, index) => (
-              <div key={index} className='flex justify-between items-center py-2 border-b border-purple-500/30'>
+              <div key={index} className='flex justify-between items-center py-2 border-b border-purple-500/30' role="listitem">
                 <div 
                   className='text-purple-400 hover:text-white transition-colors cursor-pointer font-mono text-sm flex-1'
                   onClick={() => setInputText(his)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setInputText(his)}
                 >
                   {his.length > 30 ? `${his.substring(0, 30)}...` : his}
                 </div>
@@ -378,7 +426,7 @@ function Home() {
                     deleteHistoryItem(index);
                   }}
                   className="text-purple-500 hover:text-red-400 ml-2"
-                  aria-label="Delete history item"
+                  aria-label={`Delete history item: ${his.substring(0, 20)}`}
                 >
                   <RxCross1 className="w-4 h-4" />
                 </button>
@@ -392,10 +440,23 @@ function Home() {
         <button 
           className='flex items-center justify-center gap-2 text-purple-300 bg-black hover:bg-purple-900/50 rounded-lg px-4 py-3 transition-colors mt-auto border border-purple-500/50 font-mono'
           onClick={handleLogOut}
+          aria-label="Log out"
         >
           <CgLogOut className="w-5 h-5" />
           LOG_OUT
         </button>
+      </div>
+    </aside>
+  );
+
+  // Render typing indicator
+  const renderTypingIndicator = () => (
+    <div className="mb-3 p-3 rounded-lg border bg-black/50 mr-auto border-purple-500/30 msg-appear" aria-live="polite">
+      <div className="flex items-center gap-1">
+        <strong className="text-purple-200 font-mono mr-2">VEDA_AI:</strong>
+        <span className="typing-dot" />
+        <span className="typing-dot" style={{ animationDelay: '0.2s' }} />
+        <span className="typing-dot" style={{ animationDelay: '0.4s' }} />
       </div>
     </div>
   );
@@ -412,7 +473,7 @@ function Home() {
       }}></div>
 
       {/* Header Bar */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-black/90 backdrop-blur-lg z-20 flex justify-between items-center px-6 border-b border-purple-500/50">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-black/90 backdrop-blur-lg z-20 flex justify-between items-center px-6 border-b border-purple-500/50" role="banner">
         <div ref={logoRef} className="flex items-center">
           <div className="bg-black text-purple-400 font-bold text-2xl sm:text-3xl px-4 py-2 rounded border-2 border-purple-500 shadow-lg shadow-purple-500/20 font-mono">
             VEDA<span className="text-purple-300">_AI</span>
@@ -422,6 +483,7 @@ function Home() {
         <button 
           className='hidden lg:flex items-center gap-2 text-purple-300 bg-black hover:bg-purple-900/50 rounded-lg px-4 py-2 transition-colors border border-purple-500/50 font-mono'
           onClick={handleLogOut}
+          aria-label="Log out"
         >
           <CgLogOut className="w-5 h-5" />
           <span>LOG_OUT</span>
@@ -430,14 +492,18 @@ function Home() {
         <CgMenuRight 
           className='lg:hidden text-purple-300 w-6 h-6 cursor-pointer hover:text-purple-200 transition-colors' 
           onClick={() => setHam(true)}
+          aria-label="Open menu"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setHam(true)}
         />
-      </div>
+      </header>
 
       {renderMobileSidebar()}
       {renderDesktopSidebar()}
 
       {/* Main Content */}
-      <div ref={mainContentRef} className="main-content lg:ml-64 pt-20 p-6 flex flex-col items-center justify-between min-h-screen">
+      <main ref={mainContentRef} className="main-content lg:ml-64 pt-20 p-6 flex flex-col items-center justify-between min-h-screen" role="main">
         <div 
           ref={orbRef}
           className="w-full max-w-2xl h-96 relative mb-8 rounded-2xl overflow-hidden border border-purple-500/50 shadow-xl"
@@ -452,47 +518,86 @@ function Home() {
         </div>
 
         <div className="w-full max-w-2xl bg-black/70 backdrop-blur-sm rounded-xl p-6 border border-purple-500/50 flex flex-col">
-          <div className="flex-1 overflow-y-auto max-h-64 mb-4">
+          {/* Messages area */}
+          <div className="flex-1 overflow-y-auto max-h-64 mb-4" role="log" aria-label="Chat messages" aria-live="polite">
             {messages.map((message, index) => (
               <div 
                 key={index} 
-                className={`mb-3 p-3 rounded-lg border ${message.sender === 'user' 
-                  ? 'bg-purple-900/20 ml-auto border-purple-500/30' 
-                  : 'bg-black/50 mr-auto border-purple-500/30'}`}
+                className={`mb-3 p-3 rounded-lg border msg-appear ${
+                  message.sender === 'user' 
+                    ? 'bg-purple-900/20 ml-auto max-w-[85%] border-purple-500/30' 
+                    : 'bg-black/50 mr-auto max-w-[85%] border-purple-500/30'
+                }`}
               >
-                <p className={`font-mono ${message.sender === 'user' ? 'text-purple-300' : 'text-purple-200'}`}>
+                <p className={`font-mono text-sm sm:text-base ${message.sender === 'user' ? 'text-purple-300' : 'text-purple-200'}`}>
                   <strong>{message.sender === 'user' ? 'USER:' : 'VEDA_AI:'} </strong>
                   {message.text}
                 </p>
               </div>
             ))}
+            {isTyping && renderTypingIndicator()}
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleTextSubmit} className="flex gap-2">
+          {/* Voice error banner */}
+          {voiceError && (
+            <div className="mb-3 px-3 py-2 rounded-lg bg-red-900/20 border border-red-500/30 text-red-400 font-mono text-xs sm:text-sm" role="alert">
+              ⚠ {voiceError}
+            </div>
+          )}
+
+          {/* Interim transcript preview */}
+          {interimTranscript && (
+            <div className="mb-3 px-3 py-2 rounded-lg bg-purple-900/10 border border-purple-500/20 text-purple-400/70 font-mono text-xs sm:text-sm italic" aria-live="polite">
+              🎤 {interimTranscript}
+            </div>
+          )}
+
+          {/* Input form with mic button */}
+          <form onSubmit={handleTextSubmit} className="flex gap-2 items-center" role="search" aria-label="Chat input">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="ENTER_COMMAND..."
-              className="flex-1 bg-black/70 text-purple-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-purple-500/30 font-mono"
+              placeholder={isMicRecording ? "Listening..." : "ENTER_COMMAND..."}
+              className="flex-1 bg-black/70 text-purple-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 border border-purple-500/30 font-mono placeholder:text-purple-500/50"
+              aria-label="Type your message"
+              autoComplete="off"
             />
+
+            <VoiceButton
+              isRecording={isMicRecording}
+              isProcessing={isMicProcessing}
+              onToggle={toggleMic}
+              error={voiceError}
+            />
+
             <button 
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors border border-purple-500/50 font-mono"
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors border border-purple-500/50 font-mono disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!inputText.trim()}
+              aria-label="Send message"
             >
               SEND
             </button>
           </form>
 
-          <div className="mt-4 flex justify-center items-center">
-            <div className={`w-4 h-4 rounded-full ${listening ? 'bg-green-500 animate-pulse' : 'bg-red-500'} border border-white/50`}></div>
-            <p className="ml-2 text-purple-300 font-mono">
-              {listening ? 'SYSTEM_ACTIVE: LISTENING...' : 'SYSTEM_STANDBY'}
+          {/* Voice support notice for unsupported browsers */}
+          {!voiceSupported && (
+            <p className="mt-2 text-purple-500/50 font-mono text-xs text-center">
+              Voice input not available. Use Chrome, Edge, or Safari for voice features.
+            </p>
+          )}
+
+          {/* Status indicator */}
+          <div className="mt-4 flex justify-center items-center" aria-live="polite">
+            <div className={`w-3 h-3 rounded-full ${isMicRecording ? 'bg-red-500 animate-pulse' : 'bg-green-500'} border border-white/50`} aria-hidden="true"></div>
+            <p className="ml-2 text-purple-300 font-mono text-sm">
+              {isMicRecording ? 'MIC_ACTIVE: RECORDING...' : 'SYSTEM_ONLINE'}
             </p>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

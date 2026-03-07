@@ -10,3 +10,6 @@
 # IDE/editor configs
 .vscode/
 .idea/
+
+# Build artifacts
+**/dist
