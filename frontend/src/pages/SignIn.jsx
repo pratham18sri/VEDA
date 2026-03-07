@@ -4,7 +4,7 @@ import { IoEye, IoEyeOff } from "react-icons/io5"
 import { useNavigate } from 'react-router-dom'
 import { userDataContext } from '../context/UserContext'
 import axios from "axios"
-import { gsap } from 'gsap'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 const CyberInput = styled.div`
   .cyber-input-group {
@@ -150,8 +150,6 @@ function SignIn() {
   const [err, setErr] = useState("")
   const formRef = useRef(null)
   const logoRef = useRef(null)
-  const particlesRef = useRef([])
-  const particlesContainerRef = useRef(null)
 
   useEffect(() => {
     // Matrix rain effect
@@ -371,6 +369,16 @@ function SignIn() {
             </button>
           </p>
         </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-2">
+          <div className="flex-1 h-px bg-purple-500/30"></div>
+          <span className="text-purple-500 font-mono text-xs">OR</span>
+          <div className="flex-1 h-px bg-purple-500/30"></div>
+        </div>
+
+        {/* Google Sign-In */}
+        <GoogleSignInButton mode="signin" />
       </form>
     </div>
   )

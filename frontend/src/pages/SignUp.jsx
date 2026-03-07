@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { userDataContext } from '../context/UserContext'
 import axios from "axios"
 import TextType from '../components/texttype'
-import { gsap } from 'gsap'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 const CyberInput = styled.div`
   .cyber-input-group {
@@ -143,7 +143,7 @@ const CyberToggle = styled.div`
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
-  const { serverUrl, userData, setUserData } = useContext(userDataContext)
+  const { serverUrl, setUserData } = useContext(userDataContext)
   const navigate = useNavigate()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -152,8 +152,6 @@ function SignUp() {
   const [err, setErr] = useState("")
   const formRef = useRef(null)
   const logoRef = useRef(null)
-  const particlesRef = useRef([])
-  const particlesContainerRef = useRef(null)
 
   useEffect(() => {
     // Matrix rain effect
@@ -392,6 +390,16 @@ function SignUp() {
             </button>
           </p>
         </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-2">
+          <div className="flex-1 h-px bg-purple-500/30"></div>
+          <span className="text-purple-500 font-mono text-xs">OR</span>
+          <div className="flex-1 h-px bg-purple-500/30"></div>
+        </div>
+
+        {/* Google Sign-Up */}
+        <GoogleSignInButton mode="signup" />
       </form>
     </div>
   )
