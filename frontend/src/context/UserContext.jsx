@@ -7,7 +7,7 @@ export const userDataContext=createContext()
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 function UserContext({children}) {
-    const serverUrl= import.meta.env.VITE_SERVER_URL || "http://localhost:8000"
+    const serverUrl= import.meta.env.VITE_SERVER_URL || "https://veda-tqui.onrender.com"
     const [userData,setUserData]=useState(null)
     const [frontendImage,setFrontendImage]=useState(null)
      const [backendImage,setBackendImage]=useState(null)

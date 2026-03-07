@@ -11,7 +11,7 @@ import geminiResponse from "./gemini.js"
 
 const app=express()
 app.use(cors({
-    origin:"http://localhost:5173",
+    origin:["http://localhost:5173","https://veda-ai-v9f8.onrender.com"],
     credentials:true
 }))
 const port=process.env.PORT || 5000
