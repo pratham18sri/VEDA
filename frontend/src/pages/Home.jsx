@@ -177,7 +177,7 @@ function Home() {
       console.error("Error getting response:", error);
       setIsTyping(false);
       setMessages(prev => [...prev, { 
-        text: "SYSTEM_ERROR: REQUEST_FAILED. Please try again.", 
+        text: "SYSTEM_ERROR: Failed to get AI response. Please check your connection and try again.", 
         sender: 'ai' 
       }]);
     }
@@ -585,7 +585,7 @@ function Home() {
           {/* Voice support notice for unsupported browsers */}
           {!voiceSupported && (
             <p className="mt-2 text-purple-500/50 font-mono text-xs text-center">
-              Voice input not available. Use Chrome, Edge, or Safari for voice features.
+              Voice input requires a modern browser (Chrome 33+, Edge 79+, or Safari 14.1+).
             </p>
           )}
 

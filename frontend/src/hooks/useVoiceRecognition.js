@@ -110,7 +110,7 @@ export default function useVoiceRecognition({
 
     recognition.onerror = (event) => {
       const errorMessages = {
-        'not-allowed': 'Microphone access denied. Please allow microphone permissions in your browser settings.',
+        'not-allowed': 'Microphone access denied. Click the microphone icon in your browser address bar to allow access.',
         'no-speech': 'No speech detected. Please try again.',
         'audio-capture': 'No microphone found. Please connect a microphone.',
         'network': 'Network error. Please check your connection.',
